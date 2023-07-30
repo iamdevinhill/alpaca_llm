@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Text Generation</title>
+    <style>
+        h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #3c3c50;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            max-width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            background-color: #8c8ca0;
+            border-radius: 5px;
+            padding: 10px;
+            overflow: auto; /* Enable horizontal scrolling for long lines */
+        }
+        .chat-message {
+            display: inline-block;
+            margin: 5px 0;
+            /* padding: 10px; */
+            border-radius: 5px;
+            white-space: pre-wrap; /* Allow line breaks within the chat message */
+        }
+        .chat-message.sender {
+            background-color: #8c8ca0;
+        }
+        .chat-message.receiver {
+            background-color: #8c8ca0;
+        }
+        .chat-message p {
+            margin: 0;
+        }
+        #output {
+            white-space: nowrap;
+            display: flex;
+            flex-wrap: wrap; /* Wrap the chat messages to a new line */
+        }
+        #question-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        #question-input {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            max-width: 400px;
+            background-color: #8c8ca0;
+        }
+        #question-submit {
+            padding: 8px 16px;
+            font-size: 16px;
+            background-color: #282828;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            max-width: 200px;
+        }
+        #question-submit:hover {
+            background-color: #141414;
+        }
+    </style>
+</head>
+<body>
+    <h1>LLM Text Generation</h1>
+    <div class="chat-container">
+        <div id="output"></div>
+    </div>
+    <form id="question-form">
+        <input type="text" id="question-input" placeholder="Type your question here">
+        <button type="submit" id="question-submit">Ask</button>
+    </form>
+    <script>
+        const questionForm = document.getElementById('question-form');
+        const questionInput = document.getElementById('question-input');
+
+        function handleEvent(event) {
+            const outputDiv = document.getElementById('output');
+            const message = document.createElement('div');
+            message.classList.add('chat-message', 'receiver');
+            const paragraph = document.createElement('p');
+            paragraph.textContent = event.data;
+            message.appendChild(paragraph);
+            outputDiv.appendChild(message);
+            outputDiv.scrollLeft = outputDiv.scrollWidth; // Scroll to the right to show the latest message
+        }
+
+        async function connectSSE(question) {
+            const eventSource = new EventSource(`/stream?question=${encodeURIComponent(question)}`);
+            
+            eventSource.onmessage = handleEvent;
+            eventSource.onerror = function() {
+                console.error('Error occurred in SSE connection.');
+                eventSource.close();
+            };
+        }
+
+        questionForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const question = questionInput.value;
+            if (question.trim() !== '') {
+                questionInput.value = '';
+                await connectSSE(question);
+            }
+        });
+    </script>
+</body>
+</html>
