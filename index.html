@@ -9,6 +9,7 @@
             font-size: 1.5rem;
             font-weight: bold;
             color: #fff;
+            text-align: center;
         }
 
         body {
@@ -17,7 +18,7 @@
             background-color: #3c3c50;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
+            min-height: 100%;
             margin: 0;
         }
         .chat-container {
@@ -26,7 +27,7 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             background-color: #8c8ca0;
             border-radius: 5px;
-            padding: 10px;
+            /* padding: 10px; */
             overflow: auto; /* Enable horizontal scrolling for long lines */
         }
         .chat-message {
@@ -56,9 +57,12 @@
             align-items: center;
             margin-top: 20px;
             margin-bottom: 20px;
+            bottom: 0;
+            position: absolute;
+            padding-left: 35%;
         }
         #question-input {
-            width: 100%;
+            width: 200%;
             padding: 8px;
             font-size: 16px;
             margin-bottom: 10px;
@@ -91,38 +95,60 @@
         <button type="submit" id="question-submit">Ask</button>
     </form>
     <script>
+        // Get references to the form and input elements in the HTML
         const questionForm = document.getElementById('question-form');
         const questionInput = document.getElementById('question-input');
-
+    
+        // Function to handle the event when a new message (response) is received through SSE
         function handleEvent(event) {
+            // Get the reference to the 'output' div where we will display the responses
             const outputDiv = document.getElementById('output');
+            
+            // Create a new container element for the message
             const message = document.createElement('div');
-            message.classList.add('chat-message', 'receiver');
+            message.classList.add('chat-message', 'receiver'); // Add CSS classes for styling
+    
+            // Create a paragraph element to hold the response text
             const paragraph = document.createElement('p');
-            paragraph.textContent = event.data;
-            message.appendChild(paragraph);
+            paragraph.textContent = event.data; // Set the text content to the received data
+            message.appendChild(paragraph); // Add the paragraph to the message container
+    
+            // Add the new message container to the 'output' div
             outputDiv.appendChild(message);
-            outputDiv.scrollLeft = outputDiv.scrollWidth; // Scroll to the right to show the latest message
+    
+            // Scroll the 'output' div to the right to show the latest message
+            outputDiv.scrollLeft = outputDiv.scrollWidth;
         }
-
+    
+        // Function to initiate the SSE connection and receive responses from the server
         async function connectSSE(question) {
+            // Create an EventSource to establish a connection to the server at "/stream"
             const eventSource = new EventSource(`/stream?question=${encodeURIComponent(question)}`);
             
+            // Event handler for when a new message is received from the server through SSE
             eventSource.onmessage = handleEvent;
+    
+            // Event handler for any error that occurs in the SSE connection
             eventSource.onerror = function() {
                 console.error('Error occurred in SSE connection.');
-                eventSource.close();
+                eventSource.close(); // Close the SSE connection
             };
         }
-
+    
+        // Event listener for the form submission
         questionForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
+            event.preventDefault(); // Prevent the form from submitting normally
+    
+            // Get the question text from the input field
             const question = questionInput.value;
+    
+            // If the question is not empty, proceed to connect to SSE and send the question
             if (question.trim() !== '') {
-                questionInput.value = '';
-                await connectSSE(question);
+                questionInput.value = ''; // Clear the input field
+                await connectSSE(question); // Connect to SSE and send the question to the server
             }
         });
     </script>
+    
 </body>
 </html>
