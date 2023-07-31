@@ -57,3 +57,6 @@ async def llama(question: str, request: Request):
     # Set the content type to "text/event-stream" and return an SSE response with the generator
     response = EventSourceResponse(server_sent_events(), media_type="text/event-stream")
     return response
+
+# terminal command: python -m uvicorn main:app --reload
+# must download ggml-alpaca-7b-q4.bin
